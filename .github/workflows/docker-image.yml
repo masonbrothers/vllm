@@ -6,42 +6,32 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/vllm-cpu-env
+  IMAGE_NAME: "ghcr.io/${{ github.repository_owner }}/vllm-cpu-env"
 
 jobs:
-
-  build-x86-64-cpu:
-
+  build-multiarch:
     runs-on: ubuntu-24.04
-
     steps:
     - uses: actions/checkout@v4
 
-    - name: Log in to GitHub Container Registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-    - name: Build and push the Docker image for x86_64 CPU
+    - name: Set up QEMU
       run: |
-        TIMESTAMP="$(date +%s)"
-        docker build -f Dockerfile.cpu -t "$IMAGE_NAME:$TIMESTAMP" -t "$IMAGE_NAME:latest" -t "$IMAGE_NAME:x86_64" --shm-size=4g .
-        docker push "$IMAGE_NAME:$TIMESTAMP"
-        docker push "$IMAGE_NAME:latest"
-        docker push "$IMAGE_NAME:x86_64"
+        docker run --rm --privileged tonistiigi/binfmt --install all
 
-  build-arm-cpu:
-
-    runs-on: ubuntu-24.04-arm
-
-    steps:
-    - uses: actions/checkout@v4
+    - name: Set up Docker Buildx
+      run: |
+        docker buildx create --use
+        docker buildx inspect --bootstrap
 
     - name: Log in to GitHub Container Registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
 
-    - name: Build and push the Docker image for ARM CPU
+    - name: Build and push multi-arch Docker image
       run: |
         TIMESTAMP="$(date +%s)"
-        docker build -f Dockerfile.arm -t "$IMAGE_NAME:$TIMESTAMP" -t "$IMAGE_NAME:latest" -t "$IMAGE_NAME:arm64" --shm-size=4g .
-        docker push "$IMAGE_NAME:$TIMESTAMP"
-        docker push "$IMAGE_NAME:latest"
-        docker push "$IMAGE_NAME:arm64"
+        docker buildx build --push \
+          --platform "linux/amd64" -f "Dockerfile.cpu" \
+          --platform "linux/arm64" -f "Dockerfile.arm" \
+          -t "${IMAGE_NAME}:${TIMESTAMP}" \
+          -t "${IMAGE_NAME}:latest" .
