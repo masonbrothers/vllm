@@ -1,0 +1,27 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build-x86-64-cpu:
+
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the Docker image for x86_64 cpu
+      run: docker build -f Dockerfile.cpu -t vllm-cpu-env:$(date +%s) --shm-size=4g .
+
+  build-arm-cpu:
+
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the Docker image for ARM cpu
+      run: docker build -f Dockerfile.arm -t vllm-cpu-env:$(date +%s) --shm-size=4g .
