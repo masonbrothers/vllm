@@ -22,9 +22,11 @@ jobs:
 
     - name: Build and push the Docker image for x86_64 CPU
       run: |
-        docker build -f Dockerfile.cpu -t $IMAGE_NAME:latest -t $IMAGE_NAME:x86_64 --shm-size=4g .
-        docker push $IMAGE_NAME:latest
-        docker push $IMAGE_NAME:x86_64
+        TIMESTAMP="$(date +%s)"
+        docker build -f Dockerfile.cpu -t "$IMAGE_NAME:$TIMESTAMP" -t "$IMAGE_NAME:latest" -t "$IMAGE_NAME:x86_64" --shm-size=4g .
+        docker push "$IMAGE_NAME:$TIMESTAMP"
+        docker push "$IMAGE_NAME:latest"
+        docker push "$IMAGE_NAME:x86_64"
 
   build-arm-cpu:
 
@@ -38,6 +40,8 @@ jobs:
 
     - name: Build and push the Docker image for ARM CPU
       run: |
-        docker build -f Dockerfile.arm -t $IMAGE_NAME:latest -t $IMAGE_NAME:arm64 --shm-size=4g .
-        docker push $IMAGE_NAME:latest
-        docker push $IMAGE_NAME:arm64
+        TIMESTAMP="$(date +%s)"
+        docker build -f Dockerfile.arm -t "$IMAGE_NAME:$TIMESTAMP" -t "$IMAGE_NAME:latest" -t "$IMAGE_NAME:arm64" --shm-size=4g .
+        docker push "$IMAGE_NAME:$TIMESTAMP"
+        docker push "$IMAGE_NAME:latest"
+        docker push "$IMAGE_NAME:arm64"
